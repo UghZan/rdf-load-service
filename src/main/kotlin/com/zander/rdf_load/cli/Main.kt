@@ -35,6 +35,8 @@ private fun getCli(): Cli<CliCommand> =
     Cli.builder<CliCommand>("rdf-load-service")
         .withCommands(
             HelpCommand::class.java,
-            LoadCommand::class.java
+            LoadCommand::class.java,
+            GetVerticesCommand::class.java,
+            GetEdgesCommand::class.java
         )
         .build()

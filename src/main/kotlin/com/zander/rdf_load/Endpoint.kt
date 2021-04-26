@@ -6,9 +6,9 @@ import org.apache.tinkerpop.gremlin.driver.Cluster
 import org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource.traversal
 import org.apache.tinkerpop.gremlin.structure.util.empty.EmptyGraph
 
-class Endpoint(private val port: Int, private val path: String) {
+class Endpoint(private val port: Int) {
 
-    fun start() {
+    fun start(path: String) {
 
         val cluster = Cluster.open("conf/remote-objects.yaml")
         val client = cluster.connect<Client>().alias("g")
@@ -30,24 +30,21 @@ class Endpoint(private val port: Int, private val path: String) {
             //println("added new vertex ${it.uri}")
         }
 
-        val results = g.V()
-
-        for (m in results) {
-            System.out.println(m)
-        }
-
         println("All vertices added.")
 
         //теперь приступаем к подгрузке отношений
         rdf.listStatements().forEach {
             if (it.`object`.isLiteral) // если объект отношения есть литерал
             {
-                println("literal: ${it.`object`.asLiteral().value}")
-                g.V().has("uri", it.subject.uri).property(it.predicate.uri, it.`object`.asLiteral().value.toString()).iterate() // добавляем в граф как свойство
+                //!!!Тестовые изменения!!!
+                //Поменял URI свойства на локальное имя, для теста работы сервиса запросов
+                g.V().has("uri", it.subject.uri).property(it.predicate.localName, it.`object`.asLiteral().value.toString()).iterate() // добавляем в граф как свойство
             }
             else if (it.predicate.localName == "type")
             {
-                g.V().has("uri", it.subject.uri).property(it.predicate.uri, it.`object`.asResource().uri).iterate() // добавляем в граф как свойство
+                //!!!Тестовые изменения!!!
+                //Поменял URI свойства на локальное имя, для теста работы сервиса запросов
+                g.V().has("uri", it.subject.uri).property(it.predicate.localName, it.`object`.asResource().uri).iterate() // добавляем в граф как свойство
             }
             else if (it.`object`.isURIResource) //если объект отношения есть другой объект (ресурс)
             {
@@ -66,22 +63,38 @@ class Endpoint(private val port: Int, private val path: String) {
 
         println("All edges and properties added.")
 
-        //val results = g.V()
-
-        /*for (m in results) {
-            System.out.println(m)
-        }*/
-
-        //g.iterate()
-
-        //println("Iteration completed.")
-
-        //client.submit(g)
-
         println("Submitted.")
 
         g.close()
         client.close()
         cluster.close()
+    }
+
+    fun getVertices()
+    {
+        val cluster = Cluster.open("conf/remote-objects.yaml")
+        val client = cluster.connect<Client>().alias("g")
+
+        val g = traversal().withRemote("conf/remote-graph.properties")
+
+        val results = g.V().limit(10).valueMap<String>().toList()
+
+        for (m in results) {
+            println(m)
+        }
+    }
+
+    fun getEdges()
+    {
+        val cluster = Cluster.open("conf/remote-objects.yaml")
+        val client = cluster.connect<Client>().alias("g")
+
+        val g = traversal().withRemote("conf/remote-graph.properties")
+
+        val results = g.E().limit(10).valueMap<String>().toList()
+
+        for (m in results) {
+            println(m)
+        }
     }
 }

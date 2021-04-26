@@ -13,5 +13,5 @@ class LoadCommand : CliCommand {
     @Option(type = OptionType.COMMAND, name = ["-f", "--file"], description = "path to RDF file")
     private val filePath = ""
 
-    override fun run() = Endpoint(port, filePath).start()
+    override fun run() = Endpoint(port).start(filePath)
 }
