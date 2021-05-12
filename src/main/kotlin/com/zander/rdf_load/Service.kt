@@ -6,7 +6,7 @@ import org.apache.tinkerpop.gremlin.driver.Cluster
 import org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource.traversal
 import org.apache.tinkerpop.gremlin.structure.util.empty.EmptyGraph
 
-class Endpoint(private val port: Int) {
+class Service(private val port: Int) {
 
     fun start(path: String) {
 
@@ -36,15 +36,12 @@ class Endpoint(private val port: Int) {
         rdf.listStatements().forEach {
             if (it.`object`.isLiteral) // если объект отношения есть литерал
             {
-                //!!!Тестовые изменения!!!
-                //Поменял URI свойства на локальное имя, для теста работы сервиса запросов
-                g.V().has("uri", it.subject.uri).property(it.predicate.localName, it.`object`.asLiteral().value.toString()).iterate() // добавляем в граф как свойство
+
+                g.V().has("uri", it.subject.uri).property(it.predicate.uri.removePrefix("http://").replace("/", "_"), it.`object`.asLiteral().value.toString()).iterate()// добавляем в граф как свойство
             }
             else if (it.predicate.localName == "type")
             {
-                //!!!Тестовые изменения!!!
-                //Поменял URI свойства на локальное имя, для теста работы сервиса запросов
-                g.V().has("uri", it.subject.uri).property(it.predicate.localName, it.`object`.asResource().uri).iterate() // добавляем в граф как свойство
+                g.V().has("uri", it.subject.uri).property(it.predicate.uri.removePrefix("http://").replace("/", "_"), it.`object`.asResource().uri.toString()).iterate() // добавляем в граф как свойство
             }
             else if (it.`object`.isURIResource) //если объект отношения есть другой объект (ресурс)
             {
@@ -63,8 +60,6 @@ class Endpoint(private val port: Int) {
 
         println("All edges and properties added.")
 
-        println("Submitted.")
-
         g.close()
         client.close()
         cluster.close()
@@ -82,6 +77,10 @@ class Endpoint(private val port: Int) {
         for (m in results) {
             println(m)
         }
+
+        g.close()
+        client.close()
+        cluster.close()
     }
 
     fun getEdges()
@@ -96,5 +95,9 @@ class Endpoint(private val port: Int) {
         for (m in results) {
             println(m)
         }
+
+        g.close()
+        client.close()
+        cluster.close()
     }
 }
