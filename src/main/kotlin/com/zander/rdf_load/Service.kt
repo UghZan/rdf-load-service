@@ -27,7 +27,6 @@ class Service(private val port: Int) {
         rdf.listSubjects().forEach {
             g.addV().property("uri", it.uri).iterate()
             names.add(it.uri)
-            //println("added new vertex ${it.uri}")
         }
 
         println("All vertices added.")
@@ -36,7 +35,6 @@ class Service(private val port: Int) {
         rdf.listStatements().forEach {
             if (it.`object`.isLiteral) // если объект отношения есть литерал
             {
-
                 g.V().has("uri", it.subject.uri).property(it.predicate.uri.removePrefix("http://").replace("/", "_"), it.`object`.asLiteral().value.toString()).iterate()// добавляем в граф как свойство
             }
             else if (it.predicate.localName == "type")
@@ -65,14 +63,14 @@ class Service(private val port: Int) {
         cluster.close()
     }
 
-    fun getVertices()
+    fun getVertices(limit: Long = -1)
     {
         val cluster = Cluster.open("conf/remote-objects.yaml")
         val client = cluster.connect<Client>().alias("g")
 
         val g = traversal().withRemote("conf/remote-graph.properties")
 
-        val results = g.V().limit(10).valueMap<String>().toList()
+        var results = if(limit < 0) g.V().valueMap<String>().toList() else g.V().limit(limit).valueMap<String>().toList()
 
         for (m in results) {
             println(m)
@@ -83,14 +81,14 @@ class Service(private val port: Int) {
         cluster.close()
     }
 
-    fun getEdges()
+    fun getEdges(limit: Long = -1)
     {
         val cluster = Cluster.open("conf/remote-objects.yaml")
         val client = cluster.connect<Client>().alias("g")
 
         val g = traversal().withRemote("conf/remote-graph.properties")
 
-        val results = g.E().limit(10).valueMap<String>().toList()
+        var results = if(limit < 0) g.E().valueMap<String>().toList() else g.E().limit(limit).valueMap<String>().toList()
 
         for (m in results) {
             println(m)
